@@ -1,0 +1,31 @@
+services:
+  db:
+    container_name: docker-mysql
+    image: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      TZ: Asia/Tokyo
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    ports:
+      - 3306:3306
+    volumes:
+      - volume:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 1s
+      timeout: 0.5s
+      retries: 10
+  flyway-sample:
+    container_name: sample
+    image: flyway/flyway
+    platform: linux/arm64
+    command: migrate
+    volumes:
+      - ./flyway/sample:/flyway/sql
+      - ./flyway/conf/sample.conf:/flyway/conf/flyway.conf
+    depends_on:
+      db:
+        condition: service_healthy
+volumes:
+  volume:
